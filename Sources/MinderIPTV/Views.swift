@@ -6,11 +6,11 @@ enum SidebarItem: Hashable {
 
 struct ContentView: View {
     @EnvironmentObject var store: PlaylistStore
+    @EnvironmentObject var updater: Updater
     @StateObject private var pc = PlayerController()
     @State private var sidebar: SidebarItem? = .group("📺央视频道")
     @State private var search = ""
-    @State private var showSettings = false
-
+    
     private var channels: [Channel] {
         let all = store.playlist.channels
         var list: [Channel]
@@ -31,7 +31,7 @@ struct ContentView: View {
             Section(title) {
                 ForEach(groups, id: \.self) { g in
                     HStack {
-                        Text(g)
+                        Text(Overseas.displayName(group: g))
                         Spacer()
                         Text("\(counts[g] ?? 0)").foregroundStyle(.secondary).font(.caption)
                     }.tag(SidebarItem.group(g))
@@ -48,13 +48,13 @@ struct ContentView: View {
         NavigationSplitView {
             List(selection: $sidebar) {
                 Section {
-                    Label("收藏", systemImage: "star.fill").tag(SidebarItem.favorites)
-                    Label("全部频道", systemImage: "square.grid.2x2").tag(SidebarItem.all)
+                    Label(L("收藏"), systemImage: "star.fill").tag(SidebarItem.favorites)
+                    Label(L("全部频道"), systemImage: "square.grid.2x2").tag(SidebarItem.all)
                 }
-                groupSection("国内频道", store.playlist.groups.filter {
+                groupSection(L("国内频道"), store.playlist.groups.filter {
                     !$0.hasPrefix(Overseas.tvPrefix) && !$0.hasPrefix(Overseas.radioPrefix) })
-                groupSection("海外电视", store.playlist.groups.filter { $0.hasPrefix(Overseas.tvPrefix) })
-                groupSection("海外电台", store.playlist.groups.filter { $0.hasPrefix(Overseas.radioPrefix) })
+                groupSection(L("海外电视"), store.playlist.groups.filter { $0.hasPrefix(Overseas.tvPrefix) })
+                groupSection(L("海外电台"), store.playlist.groups.filter { $0.hasPrefix(Overseas.radioPrefix) })
             }
             .navigationSplitViewColumnWidth(min: 170, ideal: 190)
             .safeAreaInset(edge: .bottom) { StatusFooter().padding(8) }
@@ -64,17 +64,17 @@ struct ContentView: View {
                     .contentShape(Rectangle())
                     .onTapGesture { pc.play(c) }
                     .contextMenu {
-                        Button(store.favorites.contains(c.id) ? "取消收藏" : "收藏") { store.toggleFavorite(c) }
+                        Button(store.favorites.contains(c.id) ? L("取消收藏") : L("加入收藏")) { store.toggleFavorite(c) }
                     }
             }
             .overlay {
                 if channels.isEmpty {
-                    ContentUnavailableView(store.isRefreshing ? "正在加载频道…" : "没有频道",
+                    ContentUnavailableView(store.isRefreshing ? L("正在加载频道…") : L("没有频道"),
                                            systemImage: "tv",
-                                           description: Text(sidebar == .favorites ? "右键频道可加入收藏" : ""))
+                                           description: Text(sidebar == .favorites ? L("右键频道可加入收藏") : ""))
                 }
             }
-            .searchable(text: $search, placement: .sidebar, prompt: "搜索频道")
+            .searchable(text: $search, placement: .sidebar, prompt: Text(L("搜索频道")))
             .navigationSplitViewColumnWidth(min: 220, ideal: 260)
         } detail: {
             PlayerPane(pc: pc)
@@ -87,31 +87,31 @@ struct ContentView: View {
                             Button {
                                 pc.selectSource(i)
                             } label: {
-                                if i == pc.sourceIndex { Label("线路 \(i + 1)", systemImage: "checkmark") }
-                                else { Text("线路 \(i + 1)") }
+                                if i == pc.sourceIndex { Label(L("线路 %d", i + 1), systemImage: "checkmark") }
+                                else { Text(L("线路 %d", i + 1)) }
                             }
                         }
-                    } label: { Label("线路 \(pc.sourceIndex + 1)/\(c.sources.count)", systemImage: "antenna.radiowaves.left.and.right") }
-                    .help("切换线路")
+                    } label: { Label(L("线路 %d/%d", pc.sourceIndex + 1, c.sources.count), systemImage: "antenna.radiowaves.left.and.right") }
+                    .help(L("切换线路"))
                 }
                 if let c = pc.channel {
                     Button { store.toggleFavorite(c) } label: {
-                        Label("收藏", systemImage: store.favorites.contains(c.id) ? "star.fill" : "star")
-                    }.help("收藏当前频道")
+                        Label(L("收藏"), systemImage: store.favorites.contains(c.id) ? "star.fill" : "star")
+                    }.help(L("收藏当前频道"))
                 }
                 Button {
                     Task { await store.refresh() }
                 } label: {
                     if store.isRefreshing { ProgressView().controlSize(.small) }
-                    else { Label("立即更新", systemImage: "arrow.clockwise") }
+                    else { Label(L("立即更新"), systemImage: "arrow.clockwise") }
                 }
-                .help("立即更新频道列表 (⌘R)")
+                .help(L("立即更新频道列表 (⌘R)"))
                 .disabled(store.isRefreshing)
-                Button { showSettings = true } label: { Label("设置", systemImage: "gearshape") }
+                Button { store.showSettings = true } label: { Label(L("设置"), systemImage: "gearshape") }
             }
         }
-        .sheet(isPresented: $showSettings) { SettingsView().environmentObject(store) }
-        .navigationTitle(pc.channel?.name ?? "小满 IPTV")
+        .sheet(isPresented: $store.showSettings) { SettingsView().environmentObject(store).environmentObject(updater) }
+        .navigationTitle(pc.channel?.name ?? L("小满 IPTV"))
         .onChange(of: store.playlist.channels.count) {
             if case .group(let g) = sidebar, !store.playlist.groups.contains(g) {
                 sidebar = store.playlist.groups.first.map { .group($0) } ?? .all
@@ -134,7 +134,7 @@ struct ChannelRow: View {
             .frame(width: 44, height: 28)
             VStack(alignment: .leading, spacing: 2) {
                 Text(channel.name).fontWeight(playing ? .semibold : .regular)
-                Text(channel.isRadio ? "电台" : "\(channel.sources.count) 条线路").font(.caption).foregroundStyle(.secondary)
+                Text(channel.isRadio ? L("电台") : L("%d 条线路", channel.sources.count)).font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
             if store.favorites.contains(channel.id) {
@@ -163,7 +163,7 @@ struct PlayerPane: View {
                         .frame(width: 160, height: 160)
                         .clipShape(RoundedRectangle(cornerRadius: 24))
                         Text(c.name).font(.title2.bold()).foregroundStyle(.white).multilineTextAlignment(.center)
-                        Text(c.group).foregroundStyle(.white.opacity(0.6))
+                        Text(Overseas.displayName(group: c.group)).foregroundStyle(.white.opacity(0.6))
                     }
                     .padding(.bottom, 40)
                     .allowsHitTesting(false)
@@ -171,14 +171,14 @@ struct PlayerPane: View {
             } else {
                 VStack(spacing: 12) {
                     Image(systemName: "play.tv").font(.system(size: 56))
-                    Text("从左侧选择频道开始观看").font(.title3)
+                    Text(L("从左侧选择频道开始观看")).font(.title3)
                 }.foregroundStyle(.white.opacity(0.6))
             }
             if !pc.status.isEmpty {
                 VStack {
                     Spacer()
                     HStack(spacing: 8) {
-                        if !pc.status.hasPrefix("所有线路") { ProgressView().controlSize(.small) }
+                        if !pc.failed { ProgressView().controlSize(.small) }
                         Text(pc.status)
                     }
                     .padding(.horizontal, 14).padding(.vertical, 8)
@@ -196,16 +196,16 @@ struct StatusFooter: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 30)) { _ in
             VStack(alignment: .leading, spacing: 3) {
-                Text("\(store.playlist.channels.count) 个频道").font(.caption.bold())
+                Text(L("%d 个频道", store.playlist.channels.count)).font(.caption.bold())
                 if let d = store.lastFetch {
-                    Text("上次更新 \(d.formatted(date: .omitted, time: .shortened))")
+                    Text(L("上次更新 %@", d.formatted(Date.FormatStyle(date: .omitted, time: .shortened, locale: Lang.locale))))
                 }
                 if let n = store.nextRefresh {
-                    Text("下次自动更新 \(n.formatted(date: .omitted, time: .shortened))")
+                    Text(L("下次自动更新 %@", n.formatted(Date.FormatStyle(date: .omitted, time: .shortened, locale: Lang.locale))))
                 } else if !store.autoRefresh {
-                    Text("自动更新已关闭")
+                    Text(L("自动更新已关闭"))
                 }
-                if let g = store.playlist.generatedAt { Text("源生成于 \(g)") }
+                if let g = store.playlist.generatedAt { Text(L("源生成于 %@", g)) }
                 if let e = store.lastError {
                     Text(e).foregroundStyle(.red).lineLimit(3).help(e)
                 }
@@ -219,6 +219,7 @@ struct StatusFooter: View {
 
 struct SettingsView: View {
     @EnvironmentObject var store: PlaylistStore
+    @EnvironmentObject var updater: Updater
     @Environment(\.dismiss) var dismiss
     @State private var text = ""
     @State private var tvSel: Set<String> = []
@@ -226,11 +227,26 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("设置").font(.title2.bold())
-            Toggle("每 1 小时自动更新频道列表", isOn: $store.autoRefresh)
+            Text(L("设置")).font(.title2.bold())
+            HStack {
+                Picker(L("语言"), selection: Binding(get: { AppLanguage.saved }, set: { AppLanguage.apply($0) })) {
+                    ForEach(AppLanguage.allCases) { Text($0.displayName).tag($0) }
+                }
+                .frame(width: 260)
+                Text(L("切换语言后应用会自动重启")).font(.caption).foregroundStyle(.secondary)
+            }
+            HStack {
+                Toggle(L("自动检查软件更新"), isOn: $updater.autoCheck)
+                Spacer()
+                Text(L("当前版本 %@", Updater.currentVersion)).font(.caption).foregroundStyle(.secondary)
+                Button(L("立即检查")) { Task { await updater.check(userInitiated: true) } }.disabled(updater.busy)
+            }
+            if !updater.status.isEmpty { Text(updater.status).font(.caption) }
+            Divider()
+            Toggle(L("每 1 小时自动更新频道列表"), isOn: $store.autoRefresh)
             VStack(alignment: .leading, spacing: 6) {
-                Text("直播源地址（每行一个，按顺序尝试，支持 M3U / TXT）").font(.headline)
-                Text("默认使用 Guovin/iptv-api 发布的结果。若你自己用 Docker 部署了 iptv-api，可填 http://localhost:8000/m3u")
+                Text(L("直播源地址（每行一个，按顺序尝试，支持 M3U / TXT）")).font(.headline)
+                Text(L("默认使用 Guovin/iptv-api 发布的结果。若你自己用 Docker 部署了 iptv-api，可填 http://localhost:8000/m3u"))
                     .font(.caption).foregroundStyle(.secondary)
                 TextEditor(text: $text)
                     .font(.system(.body, design: .monospaced))
@@ -238,19 +254,19 @@ struct SettingsView: View {
                     .border(.separator)
             }
             Divider()
-            Toggle("海外电视（来自 iptv-org 开源项目）", isOn: $store.overseasTVEnabled).font(.headline)
+            Toggle(L("海外电视（来自 iptv-org 开源项目）"), isOn: $store.overseasTVEnabled).font(.headline)
             CountryGrid(selection: $tvSel).disabled(!store.overseasTVEnabled)
-            Toggle("海外电台（来自 Radio Browser，每国热门 80 个）", isOn: $store.radioEnabled).font(.headline)
+            Toggle(L("海外电台（来自 Radio Browser，每国热门 80 个）"), isOn: $store.radioEnabled).font(.headline)
             CountryGrid(selection: $radioSel).disabled(!store.radioEnabled)
-            Text("海外直播源由网友收集，部分可能失效或需要特殊网络才能访问。").font(.caption).foregroundStyle(.secondary)
+            Text(L("海外直播源由网友收集，部分可能失效或需要特殊网络才能访问。")).font(.caption).foregroundStyle(.secondary)
             if let s = store.activeSource {
-                Text("当前使用：\(s)").font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+                Text(L("当前使用：%@", s)).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
             }
             HStack {
-                Button("恢复默认") { text = PlaylistStore.defaultSources.joined(separator: "\n") }
+                Button(L("恢复默认")) { text = PlaylistStore.defaultSources.joined(separator: "\n") }
                 Spacer()
-                Button("取消") { dismiss() }
-                Button("保存并更新") {
+                Button(L("取消")) { dismiss() }
+                Button(L("保存并更新")) {
                     let list = text.split(whereSeparator: \.isNewline)
                         .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
                     store.sources = list.isEmpty ? PlaylistStore.defaultSources : list
@@ -262,7 +278,7 @@ struct SettingsView: View {
             }
         }
         .padding(20)
-        .frame(width: 640)
+        .frame(width: 680)
         .onAppear {
             text = store.sources.joined(separator: "\n")
             tvSel = Set(store.tvCountries)

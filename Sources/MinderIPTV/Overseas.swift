@@ -6,12 +6,22 @@ struct Country: Identifiable, Hashable {
     let en: String       // iptv-org index.country.m3u 里的 group-title
     let zh: String
     let flag: String
-    var label: String { "\(flag) \(zh)" }
+    var label: String { "\(flag) \(L(zh))" }
 }
 
 enum Overseas {
     static let tvPrefix = "🌍 "
     static let radioPrefix = "📻 "
+
+    /// 分组的显示名：海外分组按当前语言显示国家名（内部 ID 仍用中文，收藏不受影响）
+    static func displayName(group g: String) -> String {
+        if g.hasPrefix(tvPrefix) { return tvPrefix + L(String(g.dropFirst(tvPrefix.count))) }
+        if g.hasPrefix(radioPrefix), g.hasSuffix("电台") {
+            let zh = String(g.dropFirst(radioPrefix.count).dropLast(2))
+            return radioPrefix + L("%@电台", L(zh))
+        }
+        return g
+    }
 
     static let countries: [Country] = [
         .init(iso: "US", en: "United States", zh: "美国", flag: "🇺🇸"),

@@ -13,6 +13,7 @@ final class PlaylistStore: ObservableObject {
     /// 合并后的完整列表（国内 + 海外电视 + 海外电台）
     @Published private(set) var playlist = Playlist(channels: [], groups: [], generatedAt: nil)
     @Published private(set) var isRefreshing = false
+    @Published var showSettings = false
     @Published private(set) var lastFetch: Date?
     @Published private(set) var lastError: String?
     @Published private(set) var activeSource: String?
@@ -98,14 +99,14 @@ final class PlaylistStore: ObservableObject {
         case .success(let list)?:
             overseasTV = list
             Self.writeJSON(list, "overseas_tv.json")
-        case .failure(let e)?: errors.append("海外电视: \(e.localizedDescription)")
+        case .failure(let e)?: errors.append(L("海外电视") + ": " + e.localizedDescription)
         case nil: break
         }
         switch await radioTask {
         case .success(let list)?:
             radio = list
             Self.writeJSON(list, "radio.json")
-        case .failure(let e)?: errors.append("海外电台: \(e.localizedDescription)")
+        case .failure(let e)?: errors.append(L("海外电台") + ": " + e.localizedDescription)
         case nil: break
         }
 
@@ -114,9 +115,9 @@ final class PlaylistStore: ObservableObject {
             lastFetch = Date()
             UserDefaults.standard.set(lastFetch, forKey: "lastFetch")
             retryAt = nil
-            lastError = errors.isEmpty ? nil : "部分更新失败（已保留旧列表）\n" + errors.joined(separator: "\n")
+            lastError = errors.isEmpty ? nil : L("部分更新失败（已保留旧列表）") + "\n" + errors.joined(separator: "\n")
         } else {
-            lastError = "更新失败（已保留旧列表）\n" + errors.joined(separator: "\n")
+            lastError = L("更新失败（已保留旧列表）") + "\n" + errors.joined(separator: "\n")
             // 失败后 5 分钟再试，而不是等满 1 小时
             retryAt = Date().addingTimeInterval(300)
         }

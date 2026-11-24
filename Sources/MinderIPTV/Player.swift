@@ -9,6 +9,7 @@ final class PlayerController: ObservableObject {
     @Published private(set) var sourceIndex = 0
     @Published private(set) var status: String = ""
     @Published private(set) var isPlaying = false
+    @Published private(set) var failed = false
 
     private var observations: [NSKeyValueObservation] = []
     private var timeout: Task<Void, Never>?
@@ -39,7 +40,8 @@ final class PlayerController: ObservableObject {
         guard let c = channel, c.sources.indices.contains(sourceIndex) else { return }
         tried.insert(sourceIndex)
         let src = c.sources[sourceIndex]
-        status = "正在连接 线路 \(sourceIndex + 1)/\(c.sources.count)…"
+        status = L("正在连接 线路 %d/%d…", sourceIndex + 1, c.sources.count)
+        failed = false
         isPlaying = false
 
         var headers: [String: String] = [:]
@@ -63,7 +65,7 @@ final class PlayerController: ObservableObject {
                         self.status = ""
                         self.timeout?.cancel()
                     } else if p.timeControlStatus == .waitingToPlayAtSpecifiedRate, self.isPlaying {
-                        self.status = "缓冲中…"
+                        self.status = L("缓冲中…")
                     }
                 }
             },
@@ -76,7 +78,7 @@ final class PlayerController: ObservableObject {
         timeout = Task { [weak self] in
             try? await Task.sleep(for: .seconds(12))
             guard !Task.isCancelled, let self, self.sourceIndex == idx, !self.isPlaying else { return }
-            self.failover(reason: "连接超时")
+            self.failover(reason: L("连接超时"))
         }
     }
 
@@ -89,7 +91,8 @@ final class PlayerController: ObservableObject {
         } else {
             timeout?.cancel()
             isPlaying = false
-            status = "所有线路都无法播放（\(reason ?? "未知错误")），请换个频道或稍后刷新列表"
+            failed = true
+            status = L("所有线路都无法播放（%@），请换个频道或稍后刷新列表", reason ?? L("未知错误"))
         }
     }
 }

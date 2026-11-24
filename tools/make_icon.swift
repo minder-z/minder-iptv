@@ -1,4 +1,4 @@
-// 生成 Orbis 应用图标：星空里的一颗星球，倾斜的轨道环绕，轨道上有一颗发光的卫星
+// 生成小满 IPTV 应用图标：星空里的一颗星球，倾斜的轨道环绕，轨道上有一颗发光的卫星
 // 用法：swift tools/make_icon.swift out.png
 import AppKit
 

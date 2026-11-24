@@ -1,6 +1,6 @@
-<p align="center"><img src="docs/icon.png" width="160" alt="寰宇 Orbis 图标"></p>
+<p align="center"><img src="docs/icon.png" width="160" alt="小满 IPTV 图标"></p>
 
-<h1 align="center">寰宇 · Orbis</h1>
+<h1 align="center">小满 IPTV · Minder IPTV</h1>
 
 <p align="center">一个原生 macOS 看电视、听电台的小应用：国内电视 + 海外电视 + 海外电台，打开就能看。</p>
 
@@ -26,12 +26,12 @@
 ./build_app.sh
 ```
 
-会生成 `寰宇.app`，拖进「应用程序」即可。第一次打开如果提示无法验证开发者，右键 → 打开。
+会生成 `小满 IPTV.app`，拖进「应用程序」即可。第一次打开如果提示无法验证开发者，右键 → 打开。
 
 ## 目录
 
 ```
-Sources/Orbis/
+Sources/MinderIPTV/
   App.swift            应用入口、菜单快捷键
   Views.swift          界面（侧边栏、频道列表、播放器、设置）
   Player.swift         播放控制与自动换线路

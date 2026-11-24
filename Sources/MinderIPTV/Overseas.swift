@@ -101,7 +101,7 @@ enum Overseas {
     // MARK: 网络
     static func getData(_ url: URL) async throws -> Data {
         var req = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30)
-        req.setValue("Orbis/1.0 (macOS)", forHTTPHeaderField: "User-Agent")
+        req.setValue("MinderIPTV/1.0 (macOS)", forHTTPHeaderField: "User-Agent")
         let (data, resp) = try await URLSession.shared.data(for: req)
         if let http = resp as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
             throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "HTTP \(http.statusCode)"])

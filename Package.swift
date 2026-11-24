@@ -2,9 +2,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "Orbis",
+    name: "MinderIPTV",
     platforms: [.macOS(.v14)],
     targets: [
-        .executableTarget(name: "Orbis", path: "Sources/Orbis")
+        .executableTarget(name: "MinderIPTV", path: "Sources/MinderIPTV")
     ]
 )

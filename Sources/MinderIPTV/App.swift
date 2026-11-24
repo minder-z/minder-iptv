@@ -1,11 +1,11 @@
 import SwiftUI
 
 @main
-struct OrbisApp: App {
+struct MinderIPTVApp: App {
     @StateObject private var store = PlaylistStore()
 
     var body: some Scene {
-        WindowGroup("寰宇") {
+        WindowGroup("小满 IPTV") {
             ContentView()
                 .environmentObject(store)
                 .frame(minWidth: 1000, minHeight: 600)

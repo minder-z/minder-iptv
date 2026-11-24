@@ -1,5 +1,5 @@
 #!/bin/bash
-# 编译并打包成 寰宇.app
+# 编译并打包成 小满 IPTV.app
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -18,20 +18,20 @@ if [ ! -f AppIcon.icns ]; then
   rm -rf "$TMP"
 fi
 
-APP="寰宇.app"
+APP="小满 IPTV.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp .build/release/Orbis "$APP/Contents/MacOS/Orbis"
+cp .build/release/MinderIPTV "$APP/Contents/MacOS/MinderIPTV"
 cp AppIcon.icns "$APP/Contents/Resources/"
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleName</key><string>寰宇</string>
-  <key>CFBundleDisplayName</key><string>寰宇</string>
-  <key>CFBundleIdentifier</key><string>io.github.minder-z.orbis</string>
-  <key>CFBundleExecutable</key><string>Orbis</string>
+  <key>CFBundleName</key><string>小满 IPTV</string>
+  <key>CFBundleDisplayName</key><string>小满 IPTV</string>
+  <key>CFBundleIdentifier</key><string>io.github.minder-z.minder-iptv</string>
+  <key>CFBundleExecutable</key><string>MinderIPTV</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>1.0</string>
   <key>CFBundleVersion</key><string>1</string>

@@ -146,7 +146,7 @@ final class PlaylistStore: ObservableObject {
     // MARK: 缓存
     private static func cacheURL(_ name: String) -> URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Orbis", isDirectory: true)
+            .appendingPathComponent("MinderIPTV", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent(name)
     }

@@ -111,7 +111,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showSettings) { SettingsView().environmentObject(store) }
-        .navigationTitle(pc.channel?.name ?? "寰宇")
+        .navigationTitle(pc.channel?.name ?? "小满 IPTV")
         .onChange(of: store.playlist.channels.count) {
             if case .group(let g) = sidebar, !store.playlist.groups.contains(g) {
                 sidebar = store.playlist.groups.first.map { .group($0) } ?? .all

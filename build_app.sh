@@ -5,10 +5,11 @@ cd "$(dirname "$0")"
 
 swift build -c release
 
-# 图标：由 tools/make_icon.swift 生成
+# 图标：tools/logo_concepts.swift 里的「E 发芽电视」（删掉 AppIcon.icns 即可重新生成）
 if [ ! -f AppIcon.icns ]; then
   TMP=$(mktemp -d)
-  swift tools/make_icon.swift "$TMP/icon.png"
+  swift tools/logo_concepts.swift "$TMP"
+  cp "$TMP/E_sprout_tv.png" "$TMP/icon.png"
   mkdir "$TMP/AppIcon.iconset"
   for s in 16 32 128 256 512; do
     sips -z $s $s "$TMP/icon.png" --out "$TMP/AppIcon.iconset/icon_${s}x${s}.png" >/dev/null
